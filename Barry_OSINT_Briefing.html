@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OSINT Briefing — D. J. Barry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@300;400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0c0d10;
+    --ink-2: #1a1c20;
+    --paper: #f4f0e6;
+    --paper-2: #ebe5d4;
+    --paper-3: #ddd5bf;
+    --rule: #1a1c20;
+    --muted: #5a5750;
+    --accent: #b8331f;
+    --accent-2: #6b3010;
+    --confirm: #1f4d2e;
+    --infer: #876019;
+    --gap: #6b1f1f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Fraunces", "Times New Roman", serif;
+    font-weight: 400;
+    line-height: 1.55;
+    font-size: 16px;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,0,0,0.04) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(184,51,31,0.04) 0%, transparent 40%);
+    background-attachment: fixed;
+  }
+
+  /* Subtle paper grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.012) 0px,
+        rgba(0,0,0,0.012) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    z-index: 1;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 50px 60px 120px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ============== HEADER ============== */
+  header.masthead {
+    border-top: 4px double var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 28px 0 22px;
+    margin-bottom: 36px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    align-items: end;
+  }
+
+  .crest {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .crest-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .doc-title {
+    font-family: "Fraunces", serif;
+    font-weight: 900;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    font-variation-settings: "opsz" 144;
+  }
+
+  .doc-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent-2);
+  }
+
+  .doc-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    line-height: 1.85;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+    border-left: 1px solid var(--ink);
+    padding-left: 22px;
+  }
+
+  .doc-meta span { color: var(--muted); display: block; font-size: 9px; margin-top: 4px; }
+
+  .doc-meta strong { font-weight: 700; }
+
+  /* ============== TARGET CARD ============== */
+  .target-card {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 36px 40px;
+    margin-bottom: 50px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .target-card::before {
+    content: "TARGET DOSSIER";
+    position: absolute;
+    top: 50%;
+    right: -30px;
+    transform: translateY(-50%) rotate(-90deg);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: rgba(244,240,230,0.15);
+    font-weight: 700;
+  }
+
+  .target-name {
+    grid-column: 1 / 3;
+    font-family: "Fraunces", serif;
+    font-size: 38px;
+    font-weight: 500;
+    font-style: italic;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .target-name strong {
+    font-style: normal;
+    font-weight: 900;
+    display: block;
+    font-size: 46px;
+  }
+
+  .target-tag {
+    grid-column: 3 / 4;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-align: right;
+    align-self: start;
+    color: rgba(244,240,230,0.6);
+    line-height: 1.7;
+  }
+
+  .target-tag .pill {
+    display: inline-block;
+    border: 1px solid var(--paper);
+    padding: 4px 9px;
+    margin: 3px 0;
+    background: rgba(184,51,31,0.15);
+  }
+
+  .target-stats {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(244,240,230,0.18);
+  }
+
+  .stat .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(244,240,230,0.55);
+    margin-bottom: 6px;
+  }
+
+  .stat .val {
+    font-family: "Fraunces", serif;
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .stat .val small {
+    font-size: 13px;
+    font-family: "JetBrains Mono", monospace;
+    color: rgba(244,240,230,0.7);
+    display: block;
+    font-weight: 400;
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ============== EXEC SUMMARY ============== */
+  .exec {
+    background: var(--paper-2);
+    border-left: 6px solid var(--accent);
+    padding: 30px 36px;
+    margin-bottom: 50px;
+    position: relative;
+  }
+
+  .exec::before {
+    content: "01 / EXECUTIVE SUMMARY";
+    position: absolute;
+    top: -10px;
+    left: 30px;
+    background: var(--paper);
+    padding: 0 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .exec p {
+    font-size: 17.5px;
+    line-height: 1.65;
+    margin-bottom: 14px;
+  }
+
+  .exec p:last-child { margin-bottom: 0; }
+
+  .exec strong { font-weight: 700; color: var(--ink); }
+
+  /* ============== SECTION ============== */
+  section {
+    margin-bottom: 56px;
+    scroll-margin-top: 30px;
+  }
+
+  .sec-head {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 22px;
+    align-items: baseline;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 26px;
+  }
+
+  .sec-num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+
+  .sec-title {
+    font-family: "Fraunces", serif;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variation-settings: "opsz" 144;
+  }
+
+  .sec-title em {
+    font-weight: 400;
+    font-style: italic;
+    color: var(--muted);
+    font-size: 22px;
+    margin-left: 14px;
+  }
+
+  /* ============== PROSE BLOCKS ============== */
+  .prose p {
+    margin-bottom: 14px;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  .prose p + p { text-indent: 0; }
+
+  /* ============== EVIDENCE TAGS ============== */
+  .tag {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    margin: 0 3px;
+    vertical-align: 1px;
+    font-weight: 600;
+    border-radius: 2px;
+  }
+
+  .tag.confirm {
+    background: var(--confirm);
+    color: var(--paper);
+  }
+
+  .tag.infer {
+    background: transparent;
+    color: var(--infer);
+    border: 1px solid var(--infer);
+  }
+
+  .tag.gap {
+    background: var(--gap);
+    color: var(--paper);
+  }
+
+  /* ============== DATA TABLE ============== */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 16px 0 20px;
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .data-table th {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper-2);
+    font-weight: 700;
+  }
+
+  .data-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--paper-3);
+    vertical-align: top;
+    line-height: 1.45;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .data-table .mono {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  .data-table .name { font-weight: 600; }
+
+  .status-active {
+    color: var(--confirm);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .status-resigned {
+    color: var(--muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  /* ============== TIMELINE ============== */
+  .timeline {
+    position: relative;
+    margin: 30px 0;
+    padding-left: 42px;
+  }
+
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--ink);
+  }
+
+  .tl-event {
+    position: relative;
+    margin-bottom: 26px;
+    padding-left: 0;
+  }
+
+  .tl-event::before {
+    content: "";
+    position: absolute;
+    left: -36px;
+    top: 8px;
+    width: 11px;
+    height: 11px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+  }
+
+  .tl-event.major::before {
+    background: var(--accent);
+    border-color: var(--accent);
+    width: 13px;
+    height: 13px;
+    left: -37px;
+    top: 7px;
+  }
+
+  .tl-year {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .tl-title {
+    font-family: "Fraunces", serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .tl-body {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  /* ============== TWO COL ============== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    margin-bottom: 18px;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 22px;
+  }
+
+  /* ============== CALLOUT CARDS ============== */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    padding: 22px 24px;
+    position: relative;
+  }
+
+  .card .card-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  .card h4 {
+    font-family: "Fraunces", serif;
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .card p {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+
+  /* ============== QUOTE ============== */
+  blockquote {
+    font-family: "Fraunces", serif;
+    font-size: 22px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.4;
+    padding: 24px 0 24px 30px;
+    border-left: 3px solid var(--accent);
+    margin: 24px 0;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+
+  blockquote cite {
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    font-style: normal;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 14px;
+    font-weight: 500;
+  }
+
+  /* ============== ASSESSMENT GRID ============== */
+  .assess-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin: 20px 0;
+  }
+
+  .gauge {
+    background: var(--paper-2);
+    padding: 18px 16px;
+    border-top: 3px solid var(--accent);
+  }
+
+  .gauge .gauge-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .gauge .gauge-val {
+    font-family: "Fraunces", serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .gauge .bars {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+
+  .gauge .bar {
+    flex: 1;
+    height: 6px;
+    background: var(--paper-3);
+  }
+
+  .gauge .bar.on { background: var(--ink); }
+  .gauge .bar.accent { background: var(--accent); }
+
+  .gauge .gauge-note {
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  /* ============== FOOTNOTES / SOURCES ============== */
+  .sources {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 36px 40px;
+    margin-top: 60px;
+  }
+
+  .sources h3 {
+    font-family: "Fraunces", serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(244,240,230,0.3);
+    padding-bottom: 12px;
+  }
+
+  .sources ol {
+    list-style: none;
+    counter-reset: src;
+    columns: 2;
+    column-gap: 30px;
+  }
+
+  .sources li {
+    counter-increment: src;
+    font-size: 12px;
+    font-family: "JetBrains Mono", monospace;
+    line-height: 1.55;
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 10px;
+    break-inside: avoid;
+  }
+
+  .sources li::before {
+    content: "[" counter(src, decimal-leading-zero) "]";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .sources li a {
+    color: rgba(244,240,230,0.85);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(244,240,230,0.4);
+    word-break: break-word;
+  }
+
+  .sources li a:hover {
+    color: var(--paper);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ============== CLASSIFICATION FOOTER ============== */
+  .classification {
+    text-align: center;
+    margin-top: 30px;
+    padding: 14px;
+    border-top: 4px double var(--ink);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ============== INLINE STYLES ============== */
+  .ent {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    background: var(--paper-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.02em;
+  }
+
+  .ticker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent-2);
+  }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 16px 0 28px;
+    padding: 12px 16px;
+    background: var(--paper-2);
+    border: 1px dashed var(--ink);
+    font-size: 11px;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
+  }
+
+  ul.bare {
+    list-style: none;
+    padding: 0;
+  }
+
+  ul.bare li {
+    padding: 8px 0 8px 22px;
+    border-bottom: 1px dotted var(--paper-3);
+    position: relative;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+
+  ul.bare li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  ul.bare li:last-child { border-bottom: none; }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .wrap { padding: 20px; }
+    .target-card, .sources { background: white !important; color: black !important; border: 2px solid black; }
+    .sources li a { color: black; }
+    .target-card::before, .doc-meta { color: #555 !important; }
+  }
+
+  @media (max-width: 800px) {
+    .wrap { padding: 30px 22px 60px; }
+    header.masthead { grid-template-columns: 1fr; gap: 20px; }
+    .doc-meta { text-align: left; border-left: none; border-top: 1px solid var(--ink); padding-left: 0; padding-top: 14px; }
+    .target-card { grid-template-columns: 1fr; }
+    .target-stats { grid-template-columns: 1fr 1fr; }
+    .two-col, .three-col, .assess-grid { grid-template-columns: 1fr; }
+    .sec-head { grid-template-columns: 1fr; gap: 6px; }
+    .sources ol { columns: 1; }
+    .doc-title { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ MASTHEAD ============ -->
+<header class="masthead">
+  <div>
+    <div class="crest"><span class="crest-dot"></span> OPEN-SOURCE INTELLIGENCE BRIEFING · CORPORATE INVESTIGATIONS</div>
+    <h1 class="doc-title">The Quiet<br/><em>Allocator</em></h1>
+  </div>
+  <div class="doc-meta">
+    <strong>FILE NO. / DJB-7521</strong>
+    <span>Subject Identifier</span>
+    <strong>17 APR 2026</strong>
+    <span>Date of Issue</span>
+    <strong>OSINT · UNCLASSIFIED</strong>
+    <span>Classification</span>
+    <strong>METHODS: PUBLIC RECORD</strong>
+    <span>Tradecraft</span>
+  </div>
+</header>
+
+<!-- ============ TARGET CARD ============ -->
+<div class="target-card">
+  <div class="target-name">
+    <strong>David Jeremiah Barry</strong>
+    <em>investor · structurer · long-duration holder</em>
+  </div>
+  <div class="target-tag">
+    SUBJECT TYPE<br/>
+    <span class="pill">PRIVATE INDIVIDUAL</span><br/>
+    <span class="pill">UK / GUERNSEY NEXUS</span><br/>
+    <span class="pill">LOW-FOOTPRINT</span>
+  </div>
+
+  <div class="target-stats">
+    <div class="stat"><div class="label">Date of Birth</div><div class="val">July 1952<small>Age ~73 at time of writing</small></div></div>
+    <div class="stat"><div class="label">Nationality</div><div class="val">British<small>Channel Islands resident (historical)</small></div></div>
+    <div class="stat"><div class="label">Occupation (CH)</div><div class="val">Investor<small>Chartered Company Secretary</small></div></div>
+    <div class="stat"><div class="label">Primary Vehicle</div><div class="val">Value Investments Ltd<small>Guernsey-registered, single-owner</small></div></div>
+  </div>
+</div>
+
+<!-- ============ EXEC SUMMARY ============ -->
+<div class="exec">
+  <p><strong>David Jeremiah Barry is a Guernsey-based, British value investor with a four-decade career arc spanning offshore trust administration, mineral-exploration ventures, distressed-debt litigation and concentrated equity positions in UK micro-cap companies.</strong> He operates almost exclusively through one personally-owned vehicle — <em>Value Investments Limited</em> (Guernsey) — and a UK holding company, <em>DB Value Investments Limited</em>, incorporated in 2021. His public footprint is intentionally narrow: a handful of contemporary press profiles, a 2024 podcast appearance, and statutory disclosures on Companies House and (historically) the LSE's RNS for crossings of the 3% major-holdings threshold.</p>
+  <p>The data supports a coherent picture of a <strong>single-principal, asset-discount investor</strong> operating an unleveraged, illiquid, long-duration book of UK micro- and nano-caps purchased at material discounts to tangible book value. The structure is classical Channel-Islands private investment: a Guernsey investment company, UK chartered-accountant correspondence (Brown Butler, Leeds), and a tightly held network of co-investors and advisers. There is no evidence of regulated fund management, third-party capital, retail solicitation, insolvencies, disqualifications or adverse regulatory action. <span class="tag confirm">Evidence-based</span></p>
+</div>
+
+<!-- ============ LEGEND ============ -->
+<div class="legend">
+  <strong style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em;">EVIDENCE LEGEND:</strong>
+  <span class="legend-item"><span class="tag confirm">CONFIRMED</span> Documentary source</span>
+  <span class="legend-item"><span class="tag infer">INFERRED</span> Reasoned from converging signals</span>
+  <span class="legend-item"><span class="tag gap">GAP</span> Absent / unverifiable</span>
+</div>
+
+<!-- ============ SECTION 1 — IDENTITY ============ -->
+<section id="s1">
+  <div class="sec-head">
+    <div class="sec-num">§ 01</div>
+    <h2 class="sec-title">Identity &amp; Verification <em>three records, one man</em></h2>
+  </div>
+  <div class="prose">
+    <p>Companies House holds <strong>three separate officer profiles</strong> that converge on the same individual. All share identical date of birth (July 1952), British nationality, and a documented Guernsey nexus. The split into three distinct profile IDs is the standard Companies House artefact produced when filings arrive over time with different correspondence addresses or minor name variants — the registry does not retroactively merge records. <span class="tag confirm">CONFIRMED</span></p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Profile ID (Companies House)</th><th>Name as filed</th><th>Address on file</th><th>DOB</th><th>Period</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">6iobTzsXRKCB_tllfwYGaaU6doM</td>
+        <td class="name">David Jeremiah BARRY</td>
+        <td>Leigh House, 28-32 St Paul's Street, Leeds LS1 2JT</td>
+        <td class="mono">Jul 1952</td>
+        <td class="mono">2021 → present</td>
+      </tr>
+      <tr>
+        <td class="mono">a7cPnUFjtrlJXIo4SW2Bf-Xs77g</td>
+        <td class="name">David Jeremi<em>a</em> BARRY <span style="color:var(--accent);">[sic]</span></td>
+        <td>Avenue House, St. Julians Avenue, St. Peter Port, Guernsey GY1 1WA</td>
+        <td class="mono">Jul 1952</td>
+        <td class="mono">2013 → 2016</td>
+      </tr>
+      <tr>
+        <td class="mono">j3saGPmoGJ2VL8unxb0oZtC6TDE</td>
+        <td class="name">David Jeremiah BARRY</td>
+        <td>2 Old College Court, Guernsey GY1 1RQ</td>
+        <td class="mono">Jul 1952</td>
+        <td class="mono">Jul 2004 → Sep 2004</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:14px; color:var(--muted); margin-top:8px;">A fourth Companies House profile (<span class="mono">yikLiMIQZ8sUu5akSPnqtOKE2SA</span>) for "David BARRY" is a confirmed <strong>different individual</strong> — Irish nationality, DOB April 1963, Surrey-based — and is excluded from this analysis. <span class="tag confirm">CONFIRMED</span></p>
+
+  <p>Aggregator <em>checkcompany.co.uk</em> additionally lists Barry at a residential address — <em>6g St Marys Court, Rue Piette, Castel, Guernsey</em> — that does not appear in current Companies House filings, suggesting either a former or non-statutory address. <span class="tag infer">INFERRED</span></p>
+</section>
+
+<!-- ============ SECTION 2 — CAREER RECONSTRUCTION ============ -->
+<section id="s2">
+  <div class="sec-head">
+    <div class="sec-num">§ 02</div>
+    <h2 class="sec-title">Career Reconstruction <em>from trustee to allocator</em></h2>
+  </div>
+
+  <div class="prose">
+    <p>Barry's career divides into three distinct phases: <strong>(i) institutional fiduciary</strong> at a Guernsey trust house through to the late 1980s; <strong>(ii) entrepreneurial / exploration ventures</strong> in the late 80s and early 90s; and <strong>(iii) discretionary value investor</strong> from the mid-1990s to the present, operating through Value Investments Limited and, latterly, DB Value Investments Limited.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-event major">
+      <div class="tl-year">PRE-1988</div>
+      <div class="tl-title">Director, Sovereign Management Limited (Guernsey)</div>
+      <div class="tl-body">Guernsey-licensed trust company established in 1974 from offices in St Julian's Court. Per contemporary reporting, Barry — a chartered company secretary — specialised in <strong>offshore trusts, company administration and tax planning</strong>. Sovereign Management was acquired by Credit Suisse in 1991 and rebranded as Credit Suisse Trustees (Guernsey) Limited, the bank's Guernsey trust franchise. <span class="tag confirm">CONFIRMED</span> (See note on date discrepancy.)</div>
+    </div>
+
+    <div class="tl-event">
+      <div class="tl-year">LATE 1980s — EARLY 1990s</div>
+      <div class="tl-title">Director &amp; shareholder, Ashchurch Exploration</div>
+      <div class="tl-body">Cited in Citywire's 2003 profile as a vehicle "set up to [explore for]…" — text truncated in available cache; full nature of the venture not fully recovered, but the name and "Exploration" suffix are consistent with a UK mineral / oil &amp; gas prospecting venture of the era. <span class="tag confirm">CONFIRMED (existence)</span> <span class="tag gap">GAP (specifics)</span></div>
+    </div>
+
+    <div class="tl-event major">
+      <div class="tl-year">LATE 1990s</div>
+      <div class="tl-title">Establishment of Value Investments Limited (Guernsey)</div>
+      <div class="tl-body">A Guernsey-registered investment company, wholly owned and solely directed by Barry. Self-described mandate: acquiring "significant holdings in UK quoted and unquoted micro-cap companies whose shares are available at prices substantially below their tangible asset value." Asset base reported at £2.5–3 million circa 2003 (likely understatement; book has compounded since). <span class="tag confirm">CONFIRMED</span></div>
+    </div>
+
+    <div class="tl-event">
+      <div class="tl-year">DEC 2001</div>
+      <div class="tl-title">Tender offer for Dart Valley Railway plc shares</div>
+      <div class="tl-body">Value Investments held 16.8% of the heritage-railway operator and tendered £7.50/share for a further ~13.2%, taking it just below the 30% Takeover Code mandatory-bid threshold. The bid generated significant alarm among enthusiast shareholders (publicly archived on uk.railway forums). The PSC of Dart Valley Railway is now Hosking Partners LLP — implying Barry's stake was eventually sold, though no merger / takeover record connects the two parties directly. <span class="tag confirm">CONFIRMED</span> <span class="tag infer">INFERRED (exit route)</span></div>
+    </div>
+
+    <div class="tl-event">
+      <div class="tl-year">~2002 — 2010</div>
+      <div class="tl-title">Cross-border distressed-debt litigation: State of Mississippi bonds</div>
+      <div class="tl-body">Joined Canadian deep-value investor Peter Cundill in suing the State of Mississippi to enforce $60m of 19th-century state bonds defaulted on in the 1830s–40s. The court ruled in favour of the State; Barry and Cundill subsequently sold the physical bonds at a profit. Demonstrates: (a) appetite for highly idiosyncratic, long-tail value plays; (b) tolerance for legal risk; (c) ability to monetise even a litigation loss via secondary collectibles markets. <span class="tag confirm">CONFIRMED</span></div>
+    </div>
+
+    <div class="tl-event">
+      <div class="tl-year">12 DEC 2013 — 25 JAN 2016</div>
+      <div class="tl-title">Director, Dart Pleasure Craft Limited (01045776)</div>
+      <div class="tl-body">A subsidiary of Dart Valley Railway Ltd operating Dartmouth riverboat services (SIC 50300 — Inland passenger water transport). The directorship is a residual operational footprint dating from the Value Investments stake. <span class="tag confirm">CONFIRMED</span></div>
+    </div>
+
+    <div class="tl-event major">
+      <div class="tl-year">16 MAR 2021</div>
+      <div class="tl-title">Incorporation of DB Value Investments Limited (UK)</div>
+      <div class="tl-body">UK private limited company (SIC 64209 — activities of other holding companies). Barry sole director. Registered office is Brown Butler chartered accountants, Leeds. Most recent accounts to 31 March 2025 filed; confirmation statement to 15 March 2025. Active. <span class="tag confirm">CONFIRMED</span></div>
+    </div>
+
+    <div class="tl-event">
+      <div class="tl-year">30 AUG 2024</div>
+      <div class="tl-title">Public-facing podcast appearance — <em>The Desert Island Investor</em></div>
+      <div class="tl-body">Interview with Mark Atkinson (hosted by Progressive Equity Research, City of London). Barry described as: "a successful and well known private investor with interests that can best be described as eclectic […] a major shareholder (above 3%) in a number of listed businesses." Career summary explicitly cites: investment banker, antique dealer, gold prospector. <span class="tag confirm">CONFIRMED</span></div>
+    </div>
+  </div>
+
+  <p style="font-size:13px; color:var(--muted); padding-left:12px; border-left:2px solid var(--paper-3); margin-top:12px;"><strong>Note on date discrepancy.</strong> Citywire (2003) reports Barry left Sovereign Management in 1988 and that the company "sold out to Credit Suisse two years before he left" (i.e. ~1986). Bailiwick Express (2014) — sourcing direct corporate history — records the Credit Suisse acquisition as 1991. The Bailiwick Express timeline is treated here as authoritative; the Citywire figure may reflect Barry's recollection or refer to a preliminary stake, joint venture or staged transaction. <span class="tag gap">GAP</span></p>
+</section>
+
+<!-- ============ SECTION 3 — CORPORATE NETWORK ============ -->
+<section id="s3">
+  <div class="sec-head">
+    <div class="sec-num">§ 03</div>
+    <h2 class="sec-title">Corporate Network Analysis <em>UK directorships filed under DOB Jul 1952</em></h2>
+  </div>
+
+  <div class="prose">
+    <p>Barry's UK statutory directorships are remarkably few for a 40-year career. Aggregator <em>companycheck.co.uk</em> records six total UK appointments (zero active, two resigned, four dissolved) — a footprint consistent with a private investor who deliberately avoids becoming an officer of his investee companies, holding stakes <em>passively</em> via Value Investments rather than taking board seats. The directorships that <em>do</em> exist are concentrated in (a) his own investment vehicles and (b) operational entities tied to specific concentrated positions.</p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Entity</th><th>Co. No.</th><th>Role / Period</th><th>Status</th><th>Strategic Function</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="name">DB Value Investments Limited</td>
+        <td class="mono">13270149</td>
+        <td>Director · 16 Mar 2021 → present</td>
+        <td><span class="status-active">Active</span></td>
+        <td>UK holding company. SIC 64209 — activities of other holding companies. Leeds registered office (Brown Butler).</td>
+      </tr>
+      <tr>
+        <td class="name">Dart Pleasure Craft Limited</td>
+        <td class="mono">01045776</td>
+        <td>Director · 12 Dec 2013 → 25 Jan 2016</td>
+        <td><span class="status-resigned">Resigned</span></td>
+        <td>Operating subsidiary of Dart Valley Railway plc — riverboat operations. Residual board role from Value Investments' historical stake.</td>
+      </tr>
+      <tr>
+        <td class="name">17 Brock Street Bath (Management) Limited</td>
+        <td class="mono">02051201</td>
+        <td>Director · 25 Jul 2004 → 14 Sep 2004</td>
+        <td><span class="status-resigned">Resigned</span></td>
+        <td>Residents' / freehold management company for a converted Georgian property in Bath. Co-directors profile (sculptors, scriptwriters, doctors) consistent with multi-flat residents' company. Almost certainly held via brief property ownership.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px; color:var(--muted); margin-top:6px;"><strong>The remaining three appointments referenced by aggregator data</strong> (two resigned, four dissolved per <em>companycheck</em>) are not visible on Companies House's current public officer profiles for the three IDs above — they likely sit on legacy / dissolved company records that have aged out of the standard officer-profile view. <span class="tag gap">GAP</span> Among them, the historically referenced <em>Ashchurch Exploration</em> would be expected. <span class="tag infer">INFERRED</span></p>
+
+  <h3 style="font-family:'Fraunces',serif; font-size:22px; font-weight:600; margin:32px 0 14px; letter-spacing:-0.01em;">Operational Hub: Leigh House, Leeds</h3>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-label">Registered Office Provider</div>
+      <h4>Brown Butler (Chartered Accountants)</h4>
+      <p>Leigh House, 28-32 St Paul's Street, Leeds LS1 2JT — verified office of Brown Butler, an established Yorkshire accountancy firm. The address serves as registered office for dozens of client SPVs and holding vehicles. <strong>Inference:</strong> DB Value Investments uses Brown Butler as nominated UK service-of-process and accounting agent. This is standard for a non-UK-resident director operating a UK holding company.</p>
+    </div>
+    <div class="card">
+      <div class="card-label">Historical Broker Linkage</div>
+      <h4>Fyshe Horton Finney — Leeds</h4>
+      <p>Citywire (2003) names Peter Knowles of Leeds-based stockbrokers Fyshe Horton Finney as Barry's broker. Combined with Brown Butler, this confirms a <strong>long-standing Leeds professional-services hub</strong> supporting an otherwise Channel-Islands-resident principal — a pattern typical of UK micro-cap value investors who require local execution and audit infrastructure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 4 — INVESTMENT STRATEGY ============ -->
+<section id="s4">
+  <div class="sec-head">
+    <div class="sec-num">§ 04</div>
+    <h2 class="sec-title">Investment Strategy Signals <em>discount-to-NAV, micro-cap, long-duration</em></h2>
+  </div>
+
+  <blockquote>
+    Value Investments Limited is a Guernsey registered investment company specializing in acquiring significant holdings in UK quoted and unquoted micro-cap companies whose shares are available at prices substantially below their tangible asset value.
+    <cite>— Self-description, valueinvestments.co.uk (archived c. 2001) <span class="tag confirm">CONFIRMED</span></cite>
+  </blockquote>
+
+  <div class="prose">
+    <p>The mandate is unusually pure for a private vehicle: <strong>(1) UK-listed and unlisted; (2) micro-cap; (3) significant — not passive — stake size; (4) discount to tangible book value</strong>. Each of those four criteria narrows the universe substantially. Read together with Barry's own characterisation — "I'm just investing in companies where the assets are substantially greater than the share price — preferably twice as much or more" — this is a Graham-style net-net / asset-discount strategy, applied with concentration rather than diversification.</p>
+    <p>A secondary signal is <em>activist disposition</em>: "Some times I try to agitate things myself a little, to make something happen." Barry's interventions are documented in three named cases — Bogod (split-capital structure), HC Slingsby (governance / disclosure), and Dart Valley Railway (tender). The pattern is <strong>constructive activism via shareholder pressure</strong>, not hostile takeover or board displacement — consistent with a single-principal holder running £-millions, not £-hundreds-of-millions.</p>
+  </div>
+
+  <h3 style="font-family:'Fraunces',serif; font-size:22px; font-weight:600; margin:24px 0 14px; letter-spacing:-0.01em;">Documented historical holdings (Value Investments)</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Issuer</th><th>Ticker</th><th>Sector</th><th>Position character</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Bogod Group plc</td><td><span class="ticker">BOGA</span></td><td>Sewing-machine distribution</td><td>Activist stake — pushed for collapse of split-capital structure</td></tr>
+      <tr><td>H.C. Slingsby plc</td><td><span class="ticker">SLNG</span></td><td>Yorkshire industrial supplies (family-controlled)</td><td>Largest independent (non-family) shareholder; agitated against opacity</td></tr>
+      <tr><td>Albion plc</td><td><span class="ticker">AON</span></td><td>Belfast tailored menswear</td><td>~6% (225,000 shares); described as a "favourite"; classic NAV-discount play</td></tr>
+      <tr><td>Folkes Group plc</td><td><span class="ticker">FOKO</span></td><td>Black Country engineering / property</td><td>Asset-backed reframing play (engineering façade, property substance)</td></tr>
+      <tr><td>Dewhurst plc</td><td><span class="ticker">DWHT</span></td><td>Lift / industrial electronics</td><td>Exited via company buy-back — efficient exit route from illiquid micro-cap</td></tr>
+      <tr><td>Burtonwood Brewery plc</td><td><span class="ticker">BWB</span></td><td>Regional brewer (Cheshire)</td><td>105,000 shares — undisclosed ("secret") sub-3% stake</td></tr>
+      <tr><td>Longmead Group plc</td><td><span class="ticker">LGM</span></td><td>Ceramics</td><td>Trapped position — "would get out if it were not so illiquid"</td></tr>
+      <tr><td>UA Group plc</td><td><span class="ticker">UAS</span></td><td>Scottish livestock auctions / petrol</td><td>Largest holding by 2003; doubled in value that year on property revaluation</td></tr>
+      <tr><td>Jubilee Investment Trust</td><td><span class="ticker">JIT</span></td><td>Discount-to-NAV closed-end fund</td><td>NAV-arbitrage play within an investment trust</td></tr>
+      <tr><td>Dart Valley Railway plc</td><td>—</td><td>Heritage railway / riverboats (Devon)</td><td>16.8% stake; £7.50/share offer for further 13.2%; later exited</td></tr>
+      <tr><td>State of Mississippi 19th-c. bonds</td><td>—</td><td>Sovereign distressed debt</td><td>Litigation play; recovered via secondary collectibles market</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px; color:var(--muted); margin-top:6px;">All holdings above are corroborated by Citywire 2003 / 2004 reporting <span class="tag confirm">CONFIRMED</span>. Current portfolio composition is not in the public record beyond the podcast statement that Barry holds "above 3%" in "a number of listed businesses." <span class="tag gap">GAP</span></p>
+</section>
+
+<!-- ============ SECTION 5 — FINANCIAL & STRUCTURAL ============ -->
+<section id="s5">
+  <div class="sec-head">
+    <div class="sec-num">§ 05</div>
+    <h2 class="sec-title">Financial &amp; Structural Insights <em>capital architecture</em></h2>
+  </div>
+
+  <div class="three-col">
+    <div class="card">
+      <div class="card-label">Capital Structure</div>
+      <h4>Single-principal, equity-funded</h4>
+      <p>Value Investments is wholly owned by Barry as sole shareholder and director. No evidence of leverage, external LP capital, or fund-style fee structure. DB Value Investments (UK) is similarly single-director. <span class="tag confirm">CONFIRMED</span></p>
+    </div>
+    <div class="card">
+      <div class="card-label">Asset Base</div>
+      <h4>£2.5–3m reported (2003)</h4>
+      <p>Public estimate now over twenty years stale. Compounding at even modest value-investor rates (8–12%) would imply present-day book in the low-to-mid eight figures — though all such projections are speculative absent current accounts. <span class="tag infer">INFERRED</span></p>
+    </div>
+    <div class="card">
+      <div class="card-label">Leverage</div>
+      <h4>No charges on file</h4>
+      <p>Companies House charges register for DB Value Investments shows no registered charges. No mortgages, debentures or floating charges. Pattern consistent with a long-only, equity-only book that does not require borrowing facilities. <span class="tag confirm">CONFIRMED</span></p>
+    </div>
+  </div>
+
+  <p style="margin-top:18px;">The structural choices — Guernsey holding company, UK accountant-administered subsidiary, no external capital, no charges — describe a <strong>privately-funded permanent-capital vehicle</strong>. There is no evidence of fund regulation under the Guernsey Financial Services Commission (which would be expected for a vehicle taking external money), supporting the inference that Value Investments is a personal investment company rather than a collective-investment scheme. <span class="tag infer">INFERRED</span></p>
+</section>
+
+<!-- ============ SECTION 6 — GUERNSEY / OFFSHORE ============ -->
+<section id="s6">
+  <div class="sec-head">
+    <div class="sec-num">§ 06</div>
+    <h2 class="sec-title">Guernsey / Offshore Analysis <em>residence, not artifice</em></h2>
+  </div>
+
+  <div class="prose">
+    <p>The Guernsey nexus is documented across decades and is materially substantive rather than a paper construct. Three converging signals support a finding of <strong>genuine residency</strong> rather than mailbox structuring:</p>
+  </div>
+
+  <ul class="bare">
+    <li><strong>Career origin in Guernsey financial services.</strong> Barry's first documented role is at Sovereign Management Limited — a Guernsey-licensed trust company — where he was a director until the late 1980s. This is a working career in Guernsey, not later structuring. <span class="tag confirm">CONFIRMED</span></li>
+    <li><strong>Country of residence declared on Companies House as Channel Islands</strong> (Dart Pleasure Craft profile, 2013–2016). This is a statutory declaration, distinct from a correspondence address. <span class="tag confirm">CONFIRMED</span></li>
+    <li><strong>Multiple Guernsey residential / correspondence addresses over time</strong>: 2 Old College Court (2004); Avenue House, St Julian's Avenue, St Peter Port (2013–16); 6g St Marys Court, Castel (current per aggregator). <span class="tag confirm">CONFIRMED</span></li>
+  </ul>
+
+  <p style="margin-top:14px;">Citywire (2003) additionally records homes in <strong>London and Spain</strong>, with Guernsey as the operating base. The picture is of a long-tenured Channel Islands resident with secondary UK and continental property — entirely conventional for a successful private financial professional of his cohort.</p>
+
+  <p style="margin-top:14px; font-size:14px; color:var(--muted); padding:14px 18px; background:var(--paper-2); border-left:3px solid var(--muted);"><strong>High-level regulatory observation only:</strong> a Guernsey holding company taking concentrated stakes in UK-listed micro-caps would generate UK-source capital gains and dividend income, both of which are subject to specific tax treatment depending on residence status and relevant double-tax arrangements. No public evidence either supports or refutes any specific tax outcome. This briefing draws no conclusions on tax matters. <span class="tag gap">GAP</span></p>
+</section>
+
+<!-- ============ SECTION 7 — NETWORK & INFLUENCE ============ -->
+<section id="s7">
+  <div class="sec-head">
+    <div class="sec-num">§ 07</div>
+    <h2 class="sec-title">Network &amp; Influence Mapping <em>the small world of UK micro-cap value</em></h2>
+  </div>
+
+  <div class="prose">
+    <p>Barry's documented network is small, professional, and clustered around the UK micro-cap value-investing ecosystem and a Guernsey-Leeds professional-services axis. There is no evidence of involvement in family offices managing third-party capital, institutional fund houses, or large-scale private equity — the network is consistent with a single principal operating with a small set of trusted intermediaries.</p>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>Connection</th><th>Relationship</th><th>Function</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Peter Cundill (d. 2011)</td><td>Joint plaintiff / co-investor</td><td>Legendary Canadian deep-value investor (Cundill Value Fund). Joint Mississippi state-bond litigation. Validates Barry's standing within the international value-investing community.</td></tr>
+      <tr><td class="name">Peter Knowles</td><td>Stockbroker</td><td>Fyshe Horton Finney, Leeds. Long-standing relationship; arranged Dewhurst exit via company buy-back.</td></tr>
+      <tr><td class="name">Brown Butler</td><td>Chartered accountants / registered office</td><td>UK administrative anchor for DB Value Investments, Leeds. Standard professional-services arrangement.</td></tr>
+      <tr><td class="name">Peregrine Moncreiffe</td><td>Investee chairman</td><td>Chairman of UA Group (former Barry holding); Barry publicly endorsed his stewardship. Suggests cooperative rather than antagonistic activist relationship.</td></tr>
+      <tr><td class="name">Mark Atkinson</td><td>Podcast host / amplifier</td><td>Creator of <em>The Desert Island Investor</em> (2024). Provides the only recent first-person public-record interview.</td></tr>
+      <tr><td class="name">Hosking Partners LLP</td><td>Successor PSC at Dart Valley Railway</td><td>No documented direct relationship to Barry; succession of control suggests Barry's stake was sold rather than inherited or merged. <span class="tag infer">INFERRED</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px;">Citywire's broker-side comparison frames Barry's style alongside <em>Peter Webb</em> (Eaglet Investment Trust) — another UK micro-cap activist of the same era. Barry has explicitly named <em>Jack Petchey</em> and <em>Andrew Perloff</em> as fellow value investors in adjacent property strategies. <strong>No documented familial directorships, spouse co-officers, or generational succession structures.</strong> <span class="tag gap">GAP</span></p>
+</section>
+
+<!-- ============ SECTION 8 — REPUTATION & PUBLIC PRESENCE ============ -->
+<section id="s8">
+  <div class="sec-head">
+    <div class="sec-num">§ 08</div>
+    <h2 class="sec-title">Reputation &amp; Public Presence <em>chosen quietness</em></h2>
+  </div>
+
+  <div class="prose">
+    <p>The public footprint is <strong>deliberately narrow</strong>: a small cluster of contemporaneous Citywire profiles (c. 2003–2004) when stake-building made him newsworthy in the UK micro-cap press; archived enthusiast-forum discussion of the Dart Valley Railway tender; and a single 2024 podcast interview. No personal social-media accounts attributable to him; no LinkedIn profile under his name matching this individual; no Wikipedia entry; no industry-association directorships visible.</p>
+    <p>Within his niche, however, he is recognised. The <em>Desert Island Investor</em> billing — "successful and well known private investor" — and the descriptor "shrewd investor" used repeatedly by Citywire two decades ago indicate a reputation that travels by word-of-mouth within the UK micro-cap analyst community rather than through mass media.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-label">Visibility Profile</div>
+      <h4>"Quiet operator"</h4>
+      <p>Three press appearances over twenty-three years; no by-lined writing; no conference circuit; no fund marketing. The press contact in 2003 occurred at Gatwick airport — Citywire "tracked him down" rather than receiving a pitch.</p>
+    </div>
+    <div class="card">
+      <div class="card-label">Tone of Coverage</div>
+      <h4>Respectful — sometimes wary</h4>
+      <p>Trade press is uniformly positive ("shrewd"). Hobbyist communities (rail enthusiasts) expressed concern about asset-stripping risk — never substantiated, and the heritage railway continued operating after Barry exited. No adverse press identified. <span class="tag confirm">CONFIRMED</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 9 — RISK & RED FLAG ============ -->
+<section id="s9">
+  <div class="sec-head">
+    <div class="sec-num">§ 09</div>
+    <h2 class="sec-title">Risk &amp; Red Flag Scan <em>strict evidence basis</em></h2>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>Category</th><th>Finding</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Insolvencies / liquidations of Barry-controlled entities</td><td>None identified. DB Value Investments (active, accounts current to Mar 2025). Dart Pleasure Craft active and filing.</td><td><span class="status-active">CLEAR</span></td></tr>
+      <tr><td>Director disqualifications</td><td>None identified on the Insolvency Service register or via Companies House.</td><td><span class="status-active">CLEAR</span></td></tr>
+      <tr><td>Regulatory enforcement (FCA, GFSC)</td><td>None identified in public registers or final-notice archives.</td><td><span class="status-active">CLEAR</span></td></tr>
+      <tr><td>Outstanding charges, CCJs, mortgages</td><td>No charges registered against DB Value Investments Limited.</td><td><span class="status-active">CLEAR</span></td></tr>
+      <tr><td>Sanctions, PEP designation</td><td>Not searched via paid sanctions databases; no public flag identified.</td><td><span class="status-resigned">NOT VERIFIED</span></td></tr>
+      <tr><td>Litigation</td><td>One historical civil action: Mississippi state-bond enforcement (with Peter Cundill). Lost on the merits; no allegation of misconduct against Barry.</td><td><span class="status-active">DISCLOSED / BENIGN</span></td></tr>
+      <tr><td>Adverse media</td><td>None identified. The "asset-stripper" concern voiced on a 2001 rail enthusiast forum is speculative commentary by hobbyists, not factual reporting.</td><td><span class="status-active">CLEAR</span></td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:14px; font-size:14px; color:var(--muted);"><strong>Methodology note.</strong> This scan is limited to free, public sources accessible from web search. A complete due-diligence file would additionally require: World-Check / Dow Jones sanctions screening; UK Insolvency Service direct query; full Companies House charge searches on every connected entity; Land Registry searches against named addresses; a Channel Islands-specific litigation database review.</p>
+</section>
+
+<!-- ============ SECTION 10 — TIMELINE SYNTHESIS ============ -->
+<section id="s10">
+  <div class="sec-head">
+    <div class="sec-num">§ 10</div>
+    <h2 class="sec-title">Timeline Synthesis <em>1952 → present</em></h2>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>Year</th><th>Event</th><th>Source class</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Jul 1952</td><td>Born (Companies House DOB).</td><td>CH official</td></tr>
+      <tr><td class="mono">~1970s</td><td>Becomes chartered company secretary; joins Sovereign Management, Guernsey.</td><td>Press / inferred</td></tr>
+      <tr><td class="mono">1988</td><td>Departs Sovereign Management.</td><td>Press</td></tr>
+      <tr><td class="mono">Late 80s–90s</td><td>Director and shareholder, Ashchurch Exploration.</td><td>Press</td></tr>
+      <tr><td class="mono">1991</td><td>Sovereign Management acquired by Credit Suisse → Credit Suisse Trustees (Guernsey) Ltd.</td><td>Bailiwick Express</td></tr>
+      <tr><td class="mono">~1995–2000</td><td>Establishes Value Investments Limited (Guernsey).</td><td>Press / inferred</td></tr>
+      <tr><td class="mono">Dec 2001</td><td>Tender offer for Dart Valley Railway plc shares; existing 16.8% stake.</td><td>Forum / press</td></tr>
+      <tr><td class="mono">2003</td><td>Citywire profile reveals portfolio: BOGA, SLNG, AON, DWHT, FOKO, BWB, LGM.</td><td>Citywire</td></tr>
+      <tr><td class="mono">2004</td><td>Brief directorship of 17 Brock Street Bath (Management) Ltd — likely property-linked.</td><td>CH official</td></tr>
+      <tr><td class="mono">~2005–2010</td><td>Mississippi state-bond suit with Peter Cundill resolved; bonds sold at profit.</td><td>Press</td></tr>
+      <tr><td class="mono">Dec 2013</td><td>Appointed director, Dart Pleasure Craft Limited.</td><td>CH official</td></tr>
+      <tr><td class="mono">Jan 2016</td><td>Resigns from Dart Pleasure Craft.</td><td>CH official</td></tr>
+      <tr><td class="mono">16 Mar 2021</td><td>Incorporates DB Value Investments Limited (UK).</td><td>CH official</td></tr>
+      <tr><td class="mono">Aug 2024</td><td>Podcast interview, <em>The Desert Island Investor</em>.</td><td>Podcast</td></tr>
+      <tr><td class="mono">Mar 2025</td><td>Most recent accounts filed for DB Value Investments.</td><td>CH official</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ SECTION 11 — INTELLIGENCE ASSESSMENT ============ -->
+<section id="s11">
+  <div class="sec-head">
+    <div class="sec-num">§ 11</div>
+    <h2 class="sec-title">Intelligence Assessment <em>analytical conclusion</em></h2>
+  </div>
+
+  <div class="assess-grid">
+    <div class="gauge">
+      <div class="gauge-label">Investor Archetype</div>
+      <div class="gauge-val">Private Allocator</div>
+      <div class="gauge-note">Single-principal permanent-capital vehicle. No third-party capital. Activist-tilted.</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Wealth Visibility</div>
+      <div class="gauge-val">LOW</div>
+      <div class="bars">
+        <span class="bar accent"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+      <div class="gauge-note">Deliberately opaque. Stakes typically held below 3% disclosure floor where possible.</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Influence (Niche)</div>
+      <div class="gauge-val">MODERATE</div>
+      <div class="bars">
+        <span class="bar on"></span>
+        <span class="bar on"></span>
+        <span class="bar on"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+      <div class="gauge-note">Recognised within UK micro-cap value circles. Negligible mass-market profile.</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Behaviour Pattern</div>
+      <div class="gauge-val">Holder &amp; Catalyst</div>
+      <div class="gauge-note">Long-duration positions, occasional shareholder activism. Not a serial restructurer.</div>
+    </div>
+  </div>
+
+  <div class="prose" style="margin-top:24px;">
+    <p>The composite reading is of a <strong>quiet, single-principal value investor</strong> with deep professional roots in Channel Islands trust and corporate-services administration, who has spent the second half of his career running a personally-funded micro-cap book from Guernsey. The strategy is conservative in structure (no leverage, no external capital, equity-only) but contrarian in selection (deeply illiquid, asset-discounted, sometimes activist). The rare public statements — both in Citywire two decades ago and in the 2024 podcast — describe an investor who values long-term holding over portfolio churn and who reaches for unconventional value plays (defaulted 19th-century sovereign bonds; heritage-railway tender offers) where larger institutions cannot or will not look.</p>
+
+    <p>The structural picture is conventional and clean: Guernsey holding company, UK chartered-accountant correspondence, no charges, no insolvencies, no disqualifications, no regulatory adverse history visible. The architecture is that of a <strong>coherent personal investment platform</strong>, not a network of opaque shells. The Leeds professional-services hub (Brown Butler accountants, Fyshe Horton Finney brokers historically) provides the operational anchor that makes UK micro-cap investing possible from a Channel Islands base.</p>
+
+    <p>The most material gaps are: <strong>(i)</strong> no current portfolio disclosure beyond the podcast statement of "above 3% in a number" of listed companies; <strong>(ii)</strong> no visible accounts for Value Investments Limited (Guernsey company filings are not public to the same depth as UK Companies House); <strong>(iii)</strong> no documented family or succession structure, leaving open questions of long-term continuity for the vehicle.</p>
+  </div>
+
+  <h3 style="font-family:'Fraunces',serif; font-size:20px; font-weight:600; margin:28px 0 12px; letter-spacing:-0.01em;">Recommended next steps for a deeper-tier investigation</h3>
+  <ul class="bare">
+    <li>Pull Guernsey Registry filings for <em>Value Investments Limited</em> directly (paid registry search) to establish incorporation date, share capital, and any director changes.</li>
+    <li>Run a full RNS / Investegate search by issuer name "Value Investments" across the past ten years for any TR-1 major-holding notifications crossing 3% / 5% / 10% thresholds — would reveal current public-equity book.</li>
+    <li>Sanctions and PEP screening via World-Check, Dow Jones Risk &amp; Compliance, or LexisNexis Bridger.</li>
+    <li>UK Land Registry searches against the historic Bath and any Spanish address references to confirm property holdings.</li>
+    <li>Companies House full charge / filing history pull on every connected entity (Dart Pleasure Craft, DB Value Investments, 17 Brock Street).</li>
+    <li>Direct review of full audio of the August 2024 <em>Desert Island Investor</em> podcast for first-person current-portfolio commentary.</li>
+  </ul>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<div class="sources">
+  <h3>Sources &amp; Citations</h3>
+  <ol>
+    <li><a href="https://find-and-update.company-information.service.gov.uk/officers/6iobTzsXRKCB_tllfwYGaaU6doM/appointments">Companies House — Officer profile, David Jeremiah BARRY (DB Value Investments)</a></li>
+    <li><a href="https://find-and-update.company-information.service.gov.uk/officers/j3saGPmoGJ2VL8unxb0oZtC6TDE/appointments">Companies House — Officer profile, David Jeremiah BARRY (17 Brock Street Bath)</a></li>
+    <li><a href="https://find-and-update.company-information.service.gov.uk/officers/a7cPnUFjtrlJXIo4SW2Bf-Xs77g/appointments">Companies House — Officer profile, David Jeremia BARRY (Dart Pleasure Craft)</a></li>
+    <li><a href="https://find-and-update.company-information.service.gov.uk/company/13270149">Companies House — DB Value Investments Limited (13270149)</a></li>
+    <li><a href="https://find-and-update.company-information.service.gov.uk/company/01045776">Companies House — Dart Pleasure Craft Limited (01045776)</a></li>
+    <li><a href="https://find-and-update.company-information.service.gov.uk/company/00852020/persons-with-significant-control">Companies House — Dart Valley Railway Ltd PSC register</a></li>
+    <li><a href="https://citywire.com/new-model-adviser/news/the-secret-of-value-investments/a211178">Citywire — "The secret of Value Investments" (c. 2003)</a></li>
+    <li><a href="https://citywire.com/new-model-adviser/news/shrewd-tidings-barry-hopes-for-a-jubilee-year/a254049">Citywire — "Shrewd Tidings: Barry hopes for a Jubilee year" (2003)</a></li>
+    <li><a href="https://citywire.com/wealth-manager/news/value-secretly-buys-ua-adds-to-albion-and-sells-slingsby/a216191">Citywire — "Value secretly buys UA, adds to Albion and sells Slingsby"</a></li>
+    <li><a href="https://citywire.com/new-model-adviser/news/barry-frees-capital-to-invest-in-property/a213806">Citywire — "Barry frees capital to invest in property"</a></li>
+    <li><a href="https://progressive-research.com/podcasts/i-talk-with-david-barry-the-private-investor-who-sued-mississippi/">Progressive Equity Research — Desert Island Investor podcast (Aug 2024)</a></li>
+    <li><a href="https://thedesertislandinvestor.transistor.fm/episodes/i-talk-with-david-barry-the-private-investor-who-sued-mississippi">Desert Island Investor — Episode page</a></li>
+    <li><a href="https://uk.railway.narkive.com/aCCvk9n2/dart-valley-railway-shares">uk.railway forum archive — Dart Valley Railway shares discussion (2001)</a></li>
+    <li><a href="https://gsy.bailiwickexpress.com/gsy/community/credit-suisse-trust-celebrates-40-years-guernsey/">Bailiwick Express — Credit Suisse Trust Guernsey 40th anniversary</a></li>
+    <li><a href="https://www.brownbutler.com/contact-us/">Brown Butler Chartered Accountants — Leigh House, Leeds</a></li>
+    <li><a href="https://www.checkcompany.co.uk/director/64211/DAVID-JEREMIAH-BARRY">checkcompany.co.uk — David Jeremiah Barry director profile</a></li>
+    <li><a href="https://www.checkcompany.co.uk/director/2634806/DAVID-JEREMIA-BARRY">checkcompany.co.uk — David Jeremia Barry director profile</a></li>
+    <li><a href="https://companycheck.co.uk/director/901455354/MR-DAVID-JEREMIAH-BARRY/summary">companycheck.co.uk — Director summary (6g St Marys Court, Castel)</a></li>
+    <li><a href="https://www.slingsby.com/investors">H.C. Slingsby plc — Investor relations</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Dart_Valley_Railway">Wikipedia — Dart Valley Railway</a></li>
+  </ol>
+</div>
+
+<div class="classification">
+  · END OF BRIEFING · OSINT — UNCLASSIFIED · METHODS: PUBLIC RECORD ONLY · NO PRIVATE INFORMATION USED ·
+</div>
+
+</div>
+</body>
+</html>
